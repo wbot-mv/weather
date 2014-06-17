@@ -2,7 +2,7 @@
 #include <Barometer.h>
 #include <DHT.h>
 
-const int pinLocal = 5;
+const int pinLocal = 3;
 
 // http://pdfserv.maximintegrated.com/en/ds/MAX7219-MAX7221.pdf
 const int pin7219_DIN = 9;
@@ -91,7 +91,7 @@ void adjustIntensity() {
 
 //===================
 
-DHT dhtSensor[] = { DHT(2, DHT22),  DHT(4, DHT22) }; // in, out
+DHT dhtSensor[] = { DHT(4, DHT22),  DHT(2, DHT22) }; // in, out
 const int NSENSORS = sizeof(dhtSensor) / sizeof(DHT);
 
 Barometer bmp085;
