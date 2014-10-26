@@ -127,7 +127,7 @@ void loop()
       case 0:
       {  // show temperature
         temp_data[sensor] = dhtSensor[sensor].readTemperature();
-        showTemp(temp_data[sensor], 0);
+        showTemp((int)(temp_data[sensor]+.5), 0);
         sw_del = switch_delay;
         state = 1;
         break;
@@ -135,7 +135,7 @@ void loop()
       case 1:
       {  // show humidity
         humd_data[sensor] = dhtSensor[sensor].readHumidity();
-        showHumd(humd_data[sensor], 0);
+        showHumd((int)(humd_data[sensor]+.5), 0);
         state = sensor ? 3 : 2;
         break;
       }
