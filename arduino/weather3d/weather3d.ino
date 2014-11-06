@@ -127,7 +127,7 @@ void loop()
       case 0:
       {  // show temperature
         temp_data[sensor] = dhtSensor[sensor].readTemperature();
-        showTemp((int)(temp_data[sensor]+.5), 0);
+        showTemp(floor(temp_data[sensor]+.5), 0);
         sw_del = switch_delay;
         state = 1;
         break;
@@ -135,7 +135,7 @@ void loop()
       case 1:
       {  // show humidity
         humd_data[sensor] = dhtSensor[sensor].readHumidity();
-        showHumd((int)(humd_data[sensor]+.5), 0);
+        showHumd(floor(humd_data[sensor]+.5), 0);
         state = sensor ? 3 : 2;
         break;
       }
@@ -143,7 +143,7 @@ void loop()
       {  // show pressure
          bmp085_t = bmp085.bmp085GetTemperature(bmp085.bmp085ReadUT()); //Get the temperature, bmp085ReadUT MUST be called first
          bmp085_p = bmp085.bmp085GetPressure(bmp085.bmp085ReadUP());  //Get the temperature
-         showPres((int)(bmp085_p/133.322368 +.5));
+         showPres(floor(bmp085_p/133.322368 +.5));
          state = 3;
          break;
       }
