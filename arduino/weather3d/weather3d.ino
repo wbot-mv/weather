@@ -1,6 +1,6 @@
 #include <Wire.h>
 #include <Barometer.h>
-#include <DHT.h>
+#include "DHT.h"
 
 const int pinLocal = 5;
 
@@ -30,32 +30,37 @@ void init7219(){
 void setIntensity(int n) { send7219(10, n); }
 void turnOn () { send7219(12, 1); }
 void turnOff() { send7219(12, 0); }
-void showTemp(int t, int src) {
-  boolean neg = t<0;
-  if (neg)  t = -t;
-  turnOff();
+int showInt(int n, byte* fill) {
+  bool neg = n<0;
+  if (neg)  n = -n;
   int dig = 1;
+  turnOff();
   do {
-    send7219(dig++, t%10);
-    t /= 10;
-  } while (t>0);
+    send7219(dig++, n%10);
+    n /= 10;
+  } while (n>0);
   if (neg)  send7219(dig++, /*'-'*/10);
-  while (dig<=3)  send7219(dig++, /*' '*/15);
+  for (int i=0; dig<=3; i++)  send7219(dig++, fill[i]);
   turnOn();
+  return dig;
+}
+void showTemp(int t, int src) {
+  static byte[] spcs = { 15, 15 };
+  showInt(t, /*"  "*/ spcs);
 }
 void showHumd(int h, int src) {
-  turnOff();
-  send7219(1, h%10);
-  send7219(2, h/10%10);
-  send7219(3, h>99?1:/*'H'*/12);
-  turnOn();
+  static byte[] spch = { 12, 15 };
+  showInt(h, /*"H "*/ spch);
 }
 void showPres(int p) {
-  turnOff();
-  send7219(1, p%10);
-  send7219(2, p/10%10);
-  send7219(3, p/100%10);
-  turnOn();
+  showInt(p, /*""*/ 0);
+}
+void showVolt(float v) {
+  int vv = v*100+.5;
+  showInt(vv, /*""*/ 0);
+  send7219(3, vv/100 + 128); 
+  static byte[] u = { 13 };
+  showInt(v*10+.5, /*"U"*/ u);
 }
 
 void test7219(){
@@ -91,8 +96,8 @@ void adjustIntensity() {
 
 //===================
 
-DHT dhtSensor[] = { DHT(2, DHT22),  DHT(4, DHT22) }; // in, out
-const int NSENSORS = sizeof(dhtSensor) / sizeof(DHT);
+DHTSensor dhtSensor[] = { DHTSensor(2),  DHTSensor(4) }; // in, out
+const int NSENSORS = sizeof(dhtSensor) / sizeof(DHTSensor);
 
 Barometer bmp085;
 
