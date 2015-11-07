@@ -1,6 +1,8 @@
 #include <Wire.h>
 #include <Barometer.h>
 #include "DHT.h"
+#include <EEPROM.h>
+#include "calibrate.h"
 
 const int pinLocal = 5;
 
@@ -45,11 +47,11 @@ int showInt(int n, byte* fill) {
   return dig;
 }
 void showTemp(int t, int src) {
-  static byte[] spcs = { 15, 15 };
+  static byte spcs[] = { 15, 15 };
   showInt(t, /*"  "*/ spcs);
 }
 void showHumd(int h, int src) {
-  static byte[] spch = { 12, 15 };
+  static byte spch[] = { 12, 15 };
   showInt(h, /*"H "*/ spch);
 }
 void showPres(int p) {
@@ -59,8 +61,8 @@ void showVolt(float v) {
   int vv = v*100+.5;
   showInt(vv, /*""*/ 0);
   send7219(3, vv/100 + 128); 
-  static byte[] u = { 13 };
-  showInt(v*10+.5, /*"U"*/ u);
+//  static byte u[] = { 11 };
+//  showInt(v*10+.5, /*"E"*/ u);
 }
 
 void test7219(){
@@ -101,12 +103,16 @@ const int NSENSORS = sizeof(dhtSensor) / sizeof(DHTSensor);
 
 Barometer bmp085;
 
+Calibrate clb;
+
 void setup(){
   Serial.begin(115200);
   pinMode(pinLocal, OUTPUT);
   init7219();
   for (int i=0; i<NSENSORS; ++i)  dhtSensor[i].begin();
   bmp085.init();
+
+  Calibrate::printEEPROM();
 
   test7219();
   Serial.println(NSENSORS);
@@ -122,6 +128,68 @@ unsigned long last_switch = -switch_delay;
 float temp_data[NSENSORS];
 float humd_data[NSENSORS];
 float bmp085_t, bmp085_p;
+
+
+// sensor values:
+// internal V, internal T
+// light
+// BMP085 P, BMP085 T
+// DHT[0..2] H/T
+// DS1820[0..N] T
+// millis()?
+int rawVcc, rawTemp;
+float vcc, internalT;
+int readVcc() {
+  int result;
+  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  delay(2);
+  ADCSRA |= _BV(ADSC); // convert
+  while (bit_is_set(ADCSRA, ADSC));
+  result = ADCL;
+  result |= ADCH<<8;
+  return result;
+}
+int readTemp() {
+  int result;
+  ADMUX = _BV(REFS0) | _BV(REFS1) | _BV(MUX3);
+  delay(10);
+  ADCSRA |= _BV(ADSC); // convert
+  while (bit_is_set(ADCSRA, ADSC));
+  result = ADCL;
+  result |= ADCH<<8;
+  return result;
+}
+void getVT() {  // 15 ms
+  rawVcc = readVcc();
+  rawTemp = readTemp();
+  vcc = 1.1*1024/rawVcc;  // calibrate 1.1?
+  internalT = rawTemp - 334;
+}
+
+
+void getData() {
+  
+}
+
+void showData() {
+}
+
+
+void sendData() {
+  Serial.print(rawVcc); Serial.print(" ");
+  Serial.print(vcc); Serial.print(" ");
+  Serial.print(rawTemp); Serial.print(" ");
+  Serial.print(internalT); Serial.print(" ");
+  Serial.print(curLight); Serial.print(" ");
+  Serial.print(bmp085_t); Serial.print(" ");
+  Serial.print(bmp085_p); Serial.print(" ");
+  for (int i=0; i<NSENSORS; ++i) {
+    Serial.print(temp_data[i]); Serial.print(" ");
+    Serial.print(humd_data[i]); Serial.print(" ");
+  }
+  Serial.print(millis()); Serial.print(" ");
+  Serial.println();
+}
 
 void loop()
 {
@@ -159,15 +227,9 @@ void loop()
         analogWrite(pinLocal, sensor ? 0 : map(constrain(curLight, LDR_MIN, LDR_MAX), LDR_MIN, LDR_MAX, 1, 255));
         //Serial.print("intensity="); Serial.print(curLight); Serial.print("=>"); Serial.println(map(constrain(curLight, LDR_MIN, LDR_MAX), LDR_MIN, LDR_MAX, 1, 255));
         if (!sensor) {
-          Serial.print(curLight); Serial.print(" ");
-          Serial.print(bmp085_t); Serial.print(" ");
-          Serial.print(bmp085_p); Serial.print(" ");
-          for (int i=0; i<NSENSORS; ++i) {
-            Serial.print(temp_data[i]); Serial.print(" ");
-            Serial.print(humd_data[i]); Serial.print(" ");
-          }
-          Serial.print(curtime); Serial.print(" ");
-          Serial.println();
+          getVT();
+          showVolt(vcc);
+          sendData();
         }
         sw_del = 300;
         state = 0;
