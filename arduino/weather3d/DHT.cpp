@@ -61,7 +61,7 @@ boolean DHTSensor::read() {
   cli();
   digitalWrite(_pin, HIGH);
   delayMicroseconds(40);
-  pinMode(_pin, INPUT);
+  pinMode(_pin, INPUT_PULLUP);
 
   // read in timings
   for ( i=0; i< MAXTIMINGS; i++) {
@@ -96,7 +96,5 @@ boolean DHTSensor::read() {
     return true;
   }
   
-
   return false;
-
 }

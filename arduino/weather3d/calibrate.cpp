@@ -13,10 +13,10 @@ void Calibrate::writeTempConfig(int rawTemp, float temp, int n) {
   EEPROM.write(0, n);
   if (n==0 || n==1) {
     int t = temp*10 + 0.5;
-    EEPROM.write(n*2+1, t>>8);
-    EEPROM.write(n*2+2, t&255);
-    EEPROM.write(n*2+3, rawTemp>>8);
-    EEPROM.write(n*2+4, rawTemp&255);
+    EEPROM.write(n*4+1, t>>8);
+    EEPROM.write(n*4+2, t&255);
+    EEPROM.write(n*4+3, rawTemp>>8);
+    EEPROM.write(n*4+4, rawTemp&255);
   }
 }
 
@@ -26,8 +26,8 @@ void Calibrate::init() {
   {
     int t = (EEPROM.read(1) << 8) | EEPROM.read(2);
     int v = (EEPROM.read(3) << 8) | EEPROM.read(4);
-    b = t/10.0 - v;
     k = 1.0;
+    b = t/10.0 - v;
     break;
   }
   case 1:
@@ -47,6 +47,6 @@ void Calibrate::init() {
 }
 
 float Calibrate::convertTemp(int data) {
-  return data*k + b;
+  return k * data + b;
 }
 

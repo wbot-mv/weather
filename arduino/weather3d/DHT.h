@@ -32,7 +32,6 @@ class DHTSensor {
   boolean read();
   float readTemperature();
   float readHumidity();
-
 };
 
 #endif//DHTAM_H
